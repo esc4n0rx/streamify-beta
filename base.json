@@ -1,0 +1,314 @@
+{
+    "base_url": "https://api.streamhivex.icu",
+    "endpoints": {
+      "/api/auth/register": {
+        "method": "POST",
+        "description": "Registro de novo usuário",
+        "payload": {
+          "nome": "string",
+          "email": "string",
+          "senha": "string"
+        },
+        "response": {
+          "status": 201,
+          "message": "Usuário registrado com sucesso",
+          "data": {
+            "id": "uuid",
+            "nome": "string",
+            "email": "string"
+          }
+        }
+      },
+      "/api/auth/login": {
+        "method": "POST",
+        "description": "Login padrão via e-mail e senha",
+        "payload": {
+          "email": "string",
+          "senha": "string"
+        },
+        "response": {
+          "status": 200,
+          "message": "Login bem-sucedido",
+          "user": {
+            "id": "uuid",
+            "nome": "string",
+            "email": "string"
+          },
+          "token": "JWT"
+        }
+      },
+      "/api/auth/social": {
+        "method": "POST",
+        "description": "Login Social com Google",
+        "payload": {
+          "email": "string",
+          "nome": "string",
+          "token_firebase": "string"
+        },
+        "response": {
+          "status": 200,
+          "message": "Login via Google concluído",
+          "user": {
+            "id": "uuid",
+            "nome": "string",
+            "email": "string"
+          },
+          "token": "JWT"
+        }
+      },
+      "/api/auth/avatars": {
+        "method": "GET",
+        "description": "Lista todos os avatares disponíveis para perfis",
+        "response": {
+          "status": 200,
+          "data": {
+            "perfil": ["avatar1.png", "avatar2.png"],
+            "perfix": ["avatarA.png", "avatarB.png"]
+          }
+        }
+      },
+      "/api/perfis": {
+        "method": "GET",
+        "description": "Lista todos os perfis vinculados ao usuário autenticado",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "response": {
+          "status": 200,
+          "data": [
+            {
+              "id": "number",
+              "nome": "string",
+              "avatar": "string",
+              "pin": "string|null"
+            }
+          ]
+        }
+      },
+      "/api/perfis": {
+        "method": "POST",
+        "description": "Criação de novo perfil",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "payload": {
+          "nome": "string",
+          "avatar": "string",
+          "pin": "string|optional"
+        },
+        "response": {
+          "status": 201,
+          "message": "Perfil criado com sucesso",
+          "data": {
+            "id": "number",
+            "nome": "string",
+            "avatar": "string"
+          }
+        }
+      },
+      "/api/perfis/validar-pin/:id": {
+        "method": "POST",
+        "description": "Valida PIN de um perfil específico",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "payload": {
+          "pin": "string"
+        },
+        "response": {
+          "status": 200,
+          "message": "PIN válido"
+        }
+      },
+      "/api/content": {
+        "method": "GET",
+        "description": "Lista conteúdos agrupados por categoria/subcategoria com ou sem paginação",
+        "query_params": {
+          "categoria": "string|optional",
+          "subcategoria": "string|optional",
+          "page": "number|optional",
+          "limit": "number|optional"
+        },
+        "response": {
+          "status": 200,
+          "data": {
+            "categoria1": {
+              "Filme": [
+                {
+                  "id": "number",
+                  "nome": "string",
+                  "poster": "url",
+                  "url": "url",
+                  "sinopse": "string"
+                }
+              ],
+              "Serie": [
+                {
+                  "nome": "string",
+                  "poster": "url",
+                  "url": "url",
+                  "sinopse": "string",
+                  "episodios": [
+                    {
+                      "id": "number",
+                      "episodio": "string",
+                      "temporada": "string",
+                      "url": "url"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "pagination": {
+            "total": "number",
+            "page": "number",
+            "limit": "number",
+            "pages": "number"
+          },
+          "filters": {
+            "categoria": "string|null",
+            "subcategoria": "string|null"
+          }
+        }
+      },
+      "/api/favorites": {
+        "method": "POST",
+        "description": "Adiciona conteúdo aos favoritos do usuário",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "payload": {
+          "conteudo_id": "number"
+        },
+        "response": {
+          "status": 201,
+          "message": "Conteúdo favoritado com sucesso"
+        }
+      },
+      "/api/lista": {
+        "method": "POST",
+        "description": "Adiciona conteúdo à lista personalizada",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "payload": {
+          "conteudo_id": "number"
+        },
+        "response": {
+          "status": 201,
+          "message": "Adicionado à lista"
+        }
+      },
+      "/api/lista": {
+        "method": "GET",
+        "description": "Retorna a lista personalizada do usuário",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "response": {
+          "status": 200,
+          "data": [
+            {
+              "id": "number",
+              "conteudo_id": "number",
+              "nome": "string",
+              "poster": "url",
+              "url": "url"
+            }
+          ]
+        }
+      },
+      "/api/lista/:id": {
+        "method": "DELETE",
+        "description": "Remove conteúdo da lista",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "response": {
+          "status": 200,
+          "message": "Removido da lista"
+        }
+      },
+      "/api/watch": {
+        "method": "POST",
+        "description": "Registra que um conteúdo foi assistido",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "payload": {
+          "conteudo_id": "number"
+        },
+        "response": {
+          "status": 201,
+          "message": "Assistido registrado com sucesso"
+        }
+      },
+      "/api/watch/progresso": {
+        "method": "POST",
+        "description": "Salva ponto de parada (continue assistindo)",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "payload": {
+          "conteudo_id": "number",
+          "tempo": "number (segundos)",
+          "temporada": "string|optional",
+          "episodio": "string|optional"
+        },
+        "response": {
+          "status": 201,
+          "message": "Progresso salvo"
+        }
+      },
+      "/api/watch/progresso": {
+        "method": "GET",
+        "description": "Retorna conteúdo salvo para continuar assistindo",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "response": {
+          "status": 200,
+          "data": [
+            {
+              "conteudo_id": "number",
+              "tempo": "number",
+              "temporada": "string|optional",
+              "episodio": "string|optional",
+              "nome": "string",
+              "poster": "url",
+              "url": "url"
+            }
+          ]
+        }
+      },
+      "/api/download": {
+        "method": "GET",
+        "description": "Baixa conteúdo via proxy downloader",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "query_params": {
+          "url": "URL real do conteúdo"
+        },
+        "restricao": "máx. 5 downloads por dia por usuário",
+        "response": "stream de arquivo + registro automático no backend"
+      },
+      "/api/sinopse": {
+        "method": "GET",
+        "description": "Busca sinopse via banco ou TMDB",
+        "headers": {
+          "Authorization": "Bearer JWT"
+        },
+        "query_params": {
+          "nome": "string"
+        },
+        "response": {
+          "status": 200,
+          "nome": "string",
+          "sinopse": "string"
+        }
+      }
+    }
+  }
+  
