@@ -397,14 +397,12 @@ const mockData = {
   },
 }
 
-// Authentication functions
 export async function login(email: string, password: string) {
   try {
     const response = await api.post("/api/auth/login", { email, senha: password })
     return response.data
   } catch (error) {
     console.error("Login error:", error)
-    // Mock response for development
     return {
       status: 200,
       message: "Login bem-sucedido",
@@ -430,7 +428,6 @@ export async function register(name: string, email: string, password: string) {
     return response.data
   } catch (error) {
     console.error("Register error:", error)
-    // Mock response for development
     return {
       status: 200,
       message: "Usuário registrado com sucesso",
@@ -446,20 +443,6 @@ export async function register(name: string, email: string, password: string) {
   }
 }
 
-
-// Modifique as funções de API para garantir que sempre retornem arrays
-
-// Content fetching functions
-export async function getTrending() {
-  try {
-    const response = await api.get("/api/trending")
-    // Garantir que o retorno seja um array
-    return Array.isArray(response.data) ? response.data : mockData.trending
-  } catch (error) {
-    console.error("Error fetching trending content:", error)
-    return mockData.trending
-  }
-}
 
 export async function getContinueWatching() {
   try {
@@ -483,27 +466,7 @@ export async function getRecommendations() {
   }
 }
 
-export async function getHighlights() {
-  try {
-    const response = await api.get("/api/highlights")
-    // Garantir que o retorno seja um array
-    return Array.isArray(response.data) ? response.data : mockData.highlights
-  } catch (error) {
-    console.error("Error fetching highlights:", error)
-    return mockData.highlights
-  }
-}
 
-export async function getLatest() {
-  try {
-    const response = await api.get("/api/latest")
-    // Garantir que o retorno seja um array
-    return Array.isArray(response.data) ? response.data : mockData.latest
-  } catch (error) {
-    console.error("Error fetching latest content:", error)
-    return mockData.latest
-  }
-}
 
 // Modifique a função getCategories para garantir que sempre retorne um array
 export async function getCategories() {

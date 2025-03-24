@@ -83,7 +83,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.user)
       setToken(response.token)
       setShowAuthModal(false)
-
+      console.log(response.token)
       toast({
         title: "Login bem-sucedido",
         description: `Bem-vindo de volta, ${response.user.nome}!`,

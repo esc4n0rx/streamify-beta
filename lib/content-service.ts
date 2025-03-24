@@ -36,6 +36,29 @@ export const getToken = (): string | null => {
   return null;
 };
 
+
+export const getLatest = async (): Promise<Content[]> => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/content?categoria=LANÇAMENTOS&subcategoria=Filme`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getToken()}`
+      }
+    });
+
+    if (!response.ok) {
+      console.error(`Erro ao buscar conteúdos em alta: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    return data.map((item: APIContentItem) => mapAPIToContent(item));
+  } catch (error) {
+    console.error("Erro ao buscar conteúdos em alta:", error);
+    return [];
+  }
+  }
 // Função auxiliar para converter dados da API para o formato dos componentes
 const mapAPIToContent = (item: APIContentItem, category?: string): Content => {
   return {

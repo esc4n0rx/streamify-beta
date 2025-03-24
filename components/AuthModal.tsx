@@ -60,6 +60,7 @@ export default function AuthModal({ isOpen }: AuthModalProps) {
 
         // Salvar token e informações do usuário
         localStorage.setItem("streamify_token", response.token)
+        
         localStorage.setItem("user_id", response.user.id)
         localStorage.setItem("user_nome", response.user.nome)
         localStorage.setItem("user_email", response.user.email)

@@ -5,7 +5,7 @@ import Avatar from "@/components/Avatar"
 import ContentGrid from "@/components/ContentGrid"
 import { useFavoritesStore } from "@/store/favoritesStore"
 import { useQuery } from "@tanstack/react-query"
-import { getTrending, getRecommendations, getLatest } from "@/lib/api"
+import { getTrending, getRecommendations, getLatest } from "@/lib/content-service"
 
 type Content = {
   id: string
@@ -61,7 +61,7 @@ export default function Favoritos() {
       </div>
 
       {favoriteContents.length > 0 ? (
-        <ContentGrid contents={favoriteContents} />
+        <ContentGrid contents={favoriteContents} aspectRatio="portrait" />
       ) : (
         <div className="flex flex-col items-center justify-center p-8 text-center h-[50vh]">
           <div className="bg-zinc-800 p-4 rounded-full mb-4">

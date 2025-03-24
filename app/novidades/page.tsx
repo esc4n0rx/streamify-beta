@@ -1,10 +1,10 @@
 import { Suspense } from "react"
 import Avatar from "@/components/Avatar"
 import HeroSlider from "@/components/HeroSlider"
-import ContentRow from "@/components/ContentRow"
-import ContentRowSkeleton from "@/components/skeletons/ContentRowSkeleton"
+import InfiniteContentGrid from "@/components/InfiniteContentGrid"
+import ContentGridSkeleton from "@/components/skeletons/ContentGridSkeleton"
 import HeroSliderSkeleton from "@/components/skeletons/HeroSliderSkeleton"
-import { getHighlights, getLatest } from "@/lib/api"
+import { getHighlights, getLatest } from "@/lib/content-new"
 
 export default function Novidades() {
   return (
@@ -13,14 +13,14 @@ export default function Novidades() {
         <h1 className="text-3xl font-bold">Novidades</h1>
         <Avatar />
       </div>
-
+      
       <Suspense fallback={<HeroSliderSkeleton />}>
         <HighlightsSlider />
       </Suspense>
-
-      <section className="mt-8">
+      
+      <section className="mt-8 mb-4">
         <h2 className="text-2xl font-semibold px-4 mb-3">Lançamentos Recentes</h2>
-        <Suspense fallback={<ContentRowSkeleton />}>
+        <Suspense fallback={<ContentGridSkeleton />}>
           <LatestContent />
         </Suspense>
       </section>
@@ -35,8 +35,16 @@ async function HighlightsSlider() {
 }
 
 async function LatestContent() {
-  const latest = await getLatest()
-  // Garantir que latest seja um array
-  return <ContentRow contents={Array.isArray(latest) ? latest : []} aspectRatio="portrait" />
+  const { contents = [], hasMore = false } = await getLatest(1, 10) || {}
+  
+  // Log para debug
+  console.log("Conteúdos para exibição:", contents.length, "hasMore:", hasMore);
+  
+  // Usar o componente InfiniteContentGrid com os conteúdos iniciais
+  return <InfiniteContentGrid 
+    initialContents={contents} 
+    initialHasMore={hasMore} 
+    aspectRatio="portrait" 
+    itemsPerRow={5}
+  />
 }
-
