@@ -121,7 +121,7 @@ export async function getPopularRanking(): Promise<RankingItem[]> {
         "Authorization": `Bearer ${getToken()}`
       }
     });
-
+    console.log(response);
     if (!response.ok) {
       console.error(`Erro ao buscar ranking: ${response.status}`);
       return [];

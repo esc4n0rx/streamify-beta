@@ -22,7 +22,6 @@ import {
 } from "@/lib/ranking-channel-service"
 import { Skeleton } from "@/components/ui/skeleton"
 
-// Componente de carregamento para ContentRow
 const ContentRowSkeleton = () => (
   <div className="px-4">
     <div className="flex space-x-4 overflow-x-auto pb-4">
@@ -37,38 +36,16 @@ export default function Home() {
   return (
     <div className="pb-20">
       <div className="flex justify-between items-center p-4 pt-6">
-        <h1 className="text-3xl font-bold">Assista Agora</h1>
+        <h1 className="text-3xl font-bold">Bem vindo</h1>
         <Avatar />
       </div>
 
-      <div className="px-4 py-2 mb-2">
+      {/* <div className="px-4 py-2 mb-2">
         <div className="inline-block bg-zinc-800 rounded-full px-4 py-1.5">
           <span className="flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-film"
-            >
-              <rect width="18" height="18" x="3" y="3" rx="2" />
-              <path d="M7 3v18" />
-              <path d="M3 7.5h4" />
-              <path d="M3 12h18" />
-              <path d="M3 16.5h4" />
-              <path d="M17 3v18" />
-              <path d="M17 7.5h4" />
-              <path d="M17 16.5h4" />
-            </svg>
-            Filmes
           </span>
         </div>
-      </div>
+      </div> */}
       
       <Suspense fallback={<HeroSliderSkeleton />}>
         <HomeHeroSlider />
@@ -90,7 +67,7 @@ export default function Home() {
 
       <section className="mt-8">
         <div className="flex justify-between items-center px-4 mb-3">
-          <h2 className="text-2xl font-semibold">Ranking Populares</h2>
+          <h2 className="text-2xl font-semibold">Ranking do Streamify</h2>
           <a href="/ranking" className="text-blue-500">
             Ver Todos
           </a>

@@ -10,6 +10,7 @@ interface HeroItem {
   title: string
   description: string
   poster_url: string
+  category?: string
 }
 
 interface HeroSliderProps {
@@ -43,7 +44,7 @@ export default function HeroSlider({ items }: HeroSliderProps) {
   }
   
   return (
-    <div className="relative w-full h-72 md:h-96 overflow-hidden">
+    <div className="relative w-full h-[100vh] max-h-[600px] overflow-hidden">
       {items.map((item, index) => (
         <div
           key={item.id}
@@ -63,47 +64,56 @@ export default function HeroSlider({ items }: HeroSliderProps) {
                 target.src = "/placeholder-hero.png"
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 p-6 w-full">
-              <h2 className="text-3xl font-bold text-white mb-2">{item.title}</h2>
-              <p className="text-gray-200 mb-4 line-clamp-2 md:line-clamp-3 max-w-xl">
-                {item.description}
-              </p>
-              <button
-                onClick={() => handleWatchClick(item.id)}
-                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full flex items-center"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="mr-2"
+              <div className="max-w-4xl mx-auto">
+                {item.category && (
+                  <div className="mb-2 flex items-center">
+                    <span className="text-red-600 font-bold text-sm mr-2 bg-red-600/20 px-1 rounded">
+                      {item.category}
+                    </span>
+                  </div>
+                )}
+                <h2 className="text-4xl font-bold text-white mb-2 tracking-tight">{item.title}</h2>
+                <p className="text-gray-300 mb-6 line-clamp-2 text-lg max-w-xl">
+                  {item.description}
+                </p>
+                <button
+                  onClick={() => handleWatchClick(item.id)}
+                  className="bg-transparent text-white border py-2 px-6 rounded-full flex items-center hover:bg-white/10 transition-colors"
                 >
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-                Assistir
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mr-2"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  Assista Agora
+                </button>
+              </div>
             </div>
           </div>
         </div>
       ))}
       
-      {/* Indicadores de slide */}
-      <div className="absolute bottom-4 right-4 flex space-x-2">
+      {/* Indicadores de slide, agora centralizados na parte inferior */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
         {items.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${
+            className={`h-2 rounded-full transition-all ${
               index === currentIndex
-                ? "bg-blue-500 w-8"
-                : "bg-gray-400 hover:bg-gray-300"
+                ? "bg-white w-6"
+                : "bg-gray-500 w-2 hover:bg-gray-400"
             }`}
             aria-label={`Ir para slide ${index + 1}`}
           />
@@ -115,13 +125,16 @@ export default function HeroSlider({ items }: HeroSliderProps) {
 
 export function HeroSliderSkeleton() {
   return (
-    <div className="relative w-full h-72 md:h-96">
+    <div className="relative w-full h-[100vh] max-h-[600px]">
       <Skeleton className="w-full h-full" />
       <div className="absolute bottom-0 left-0 p-6 w-full">
-        <Skeleton className="h-8 w-64 mb-2" />
-        <Skeleton className="h-4 w-full max-w-xl mb-2" />
-        <Skeleton className="h-4 w-full max-w-md mb-4" />
-        <Skeleton className="h-10 w-32 rounded-full" />
+        <div className="max-w-4xl mx-auto">
+          <Skeleton className="h-4 w-20 mb-2" />
+          <Skeleton className="h-10 w-64 mb-2" />
+          <Skeleton className="h-6 w-full max-w-xl mb-2" />
+          <Skeleton className="h-6 w-full max-w-md mb-6" />
+          <Skeleton className="h-10 w-48 rounded-full" />
+        </div>
       </div>
     </div>
   )

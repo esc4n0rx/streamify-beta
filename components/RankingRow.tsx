@@ -1,4 +1,3 @@
-// components/RankingRow.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -11,6 +10,7 @@ interface RankingItem {
   title: string
   poster_url: string
   position: number
+  category?: string
 }
 
 interface RankingRowProps {
@@ -34,18 +34,16 @@ export default function RankingRow({ items }: RankingRowProps) {
 
   return (
     <div className="px-4">
-      <div className="flex space-x-4 overflow-x-auto pb-4">
+      <div className="flex space-x-6 overflow-x-auto pb-8">
         {items.map((item) => (
           <div
             key={item.id}
-            className="flex-shrink-0 relative"
+            className="flex-shrink-0 cursor-pointer"
             onClick={() => handleClick(item.id)}
           >
             <div className="relative">
-              <div className="absolute -left-1 -top-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center z-10 text-white font-bold shadow-lg">
-                {item.position}
-              </div>
-              <div className="w-32 h-48 relative rounded-lg overflow-hidden">
+              {/* Poster da imagem com borda arredondada */}
+              <div className="w-64 h-36 relative rounded-xl overflow-hidden">
                 <Image
                   src={item.poster_url}
                   alt={item.title}
@@ -56,9 +54,31 @@ export default function RankingRow({ items }: RankingRowProps) {
                     target.src = "/placeholder-poster.png"
                   }}
                 />
+                
+                {/* Logo do Apple TV+ no canto inferior direito */}
+                <div className="absolute bottom-2 right-2">
+                  <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 5C9.5 5 5 9.5 5 15C5 20.5 9.5 25 15 25C20.5 25 25 20.5 25 15C25 9.5 20.5 5 15 5ZM12 20V10L20 15L12 20Z" fill="white"/>
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Informações abaixo do poster */}
+              <div className="mt-3 flex">
+                {/* Número de posição grande */}
+                <div className="text-6xl font-bold text-gray-500 mr-4 -mt-1">
+                  {item.position}
+                </div>
+                
+                {/* Título e categoria */}
+                <div className="flex flex-col max-w-[160px]">
+                  <h3 className="text-lg font-bold text-white leading-tight truncate">{item.title}</h3>
+                  {item.category && (
+                    <span className="text-sm text-gray-400">{item.category}</span>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="mt-2 w-32 truncate text-sm">{item.title}</div>
           </div>
         ))}
       </div>
@@ -69,14 +89,17 @@ export default function RankingRow({ items }: RankingRowProps) {
 export function RankingRowSkeleton() {
   return (
     <div className="px-4">
-      <div className="flex space-x-4 overflow-x-auto pb-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex-shrink-0 relative">
-            <div className="absolute -left-1 -top-1 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center z-10">
-              <Skeleton className="w-4 h-4 rounded-full bg-blue-400" />
+      <div className="flex space-x-6 overflow-x-auto pb-8">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex-shrink-0">
+            <Skeleton className="w-64 h-36 rounded-xl" />
+            <div className="mt-3 flex">
+              <Skeleton className="w-10 h-14 mr-4" />
+              <div className="flex flex-col">
+                <Skeleton className="w-40 h-6 mb-2" />
+                <Skeleton className="w-24 h-4" />
+              </div>
             </div>
-            <Skeleton className="flex-shrink-0 w-32 h-48 rounded-lg" />
-            <Skeleton className="mt-2 w-24 h-4 rounded" />
           </div>
         ))}
       </div>

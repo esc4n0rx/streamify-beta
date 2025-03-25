@@ -1,4 +1,3 @@
-// components/ChannelsRow.tsx
 "use client"
 
 import { useRouter } from "next/navigation"
@@ -32,26 +31,37 @@ export default function ChannelsRow({ channels }: ChannelsRowProps) {
 
   return (
     <div className="px-4">
-      <div className="flex space-x-4 overflow-x-auto pb-4">
+      <div className="flex space-x-4 overflow-x-auto pb-6">
         {channels.map((channel) => (
           <div
             key={channel.id}
             className="flex-shrink-0 cursor-pointer"
             onClick={() => handleClick(channel)}
           >
-            <div className="w-24 h-24 relative rounded-lg overflow-hidden bg-zinc-800">
+            <div className="w-36 h-20 relative rounded-lg overflow-hidden">
+              {/* Fundo escuro como fallback */}
+              <div className="absolute inset-0 bg-zinc-900"></div>
+              
+              {/* Imagem de logo que preenche todo o card */}
               <Image
                 src={channel.logo_url}
                 alt={channel.name}
                 fill
-                className="object-contain p-2"
+                className="object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
                   target.src = "/placeholder-logo.png"
                 }}
               />
+              
+              {/* Overlay gradiente para dar contraste ao texto */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+              
+              {/* Nome do canal sobreposto à imagem */}
+              <div className="absolute bottom-2 left-0 right-0 text-center text-sm text-white font-bold px-2 drop-shadow-md">
+                {channel.name}
+              </div>
             </div>
-            <div className="mt-2 w-24 text-center text-sm">{channel.name}</div>
           </div>
         ))}
       </div>
@@ -62,11 +72,10 @@ export default function ChannelsRow({ channels }: ChannelsRowProps) {
 export function ChannelsRowSkeleton() {
   return (
     <div className="px-4">
-      <div className="flex space-x-4 overflow-x-auto pb-4">
+      <div className="flex space-x-4 overflow-x-auto pb-6">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex-shrink-0">
-            <Skeleton className="w-24 h-24 rounded-lg" />
-            <Skeleton className="mt-2 w-16 h-4 mx-auto rounded" />
+            <Skeleton className="w-36 h-20 rounded-lg" />
           </div>
         ))}
       </div>
