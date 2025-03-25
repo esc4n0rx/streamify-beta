@@ -3,6 +3,9 @@
 import { Suspense, useEffect, useState } from "react"
 import Avatar from "@/components/Avatar"
 import ContentRow from "@/components/ContentRow"
+import RankingRow, { RankingRowSkeleton } from "@/components/RankingRow"
+import ChannelsRow, { ChannelsRowSkeleton } from "@/components/ChannelsRow"
+import HeroSlider, { HeroSliderSkeleton } from "@/components/HeroSlider"
 import { useAuth } from "@/components/AuthProvider"
 import { 
   getTrending, 
@@ -10,6 +13,13 @@ import {
   getRecommendations,
   type Content
 } from "@/lib/content-service"
+import {
+  getPopularRanking,
+  getAvailableChannels,
+  getHomeHighlights,
+  type RankingItem,
+  type Channel
+} from "@/lib/ranking-channel-service"
 import { Skeleton } from "@/components/ui/skeleton"
 
 // Componente de carregamento para ContentRow
@@ -31,7 +41,7 @@ export default function Home() {
         <Avatar />
       </div>
 
-      <div className="px-4 py-2">
+      <div className="px-4 py-2 mb-2">
         <div className="inline-block bg-zinc-800 rounded-full px-4 py-1.5">
           <span className="flex items-center gap-2">
             <svg
@@ -59,6 +69,10 @@ export default function Home() {
           </span>
         </div>
       </div>
+      
+      <Suspense fallback={<HeroSliderSkeleton />}>
+        <HomeHeroSlider />
+      </Suspense>
 
       <section className="mt-6">
         <h2 className="text-2xl font-semibold px-4 mb-3">Em Alta</h2>
@@ -76,8 +90,29 @@ export default function Home() {
 
       <section className="mt-8">
         <div className="flex justify-between items-center px-4 mb-3">
+          <h2 className="text-2xl font-semibold">Ranking Populares</h2>
+          <a href="/ranking" className="text-blue-500">
+            Ver Todos
+          </a>
+        </div>
+        <Suspense fallback={<RankingRowSkeleton />}>
+          <PopularRankingContent />
+        </Suspense>
+      </section>
+
+      <section className="mt-8">
+        <div className="flex justify-between items-center px-4 mb-3">
+          <h2 className="text-2xl font-semibold">Canais & Apps</h2>
+        </div>
+        <Suspense fallback={<ChannelsRowSkeleton />}>
+          <ChannelsContent />
+        </Suspense>
+      </section>
+
+      <section className="mt-8">
+        <div className="flex justify-between items-center px-4 mb-3">
           <h2 className="text-2xl font-semibold">Recomendado para você</h2>
-          <a href="#" className="text-blue-500">
+          <a href="/recommendations" className="text-blue-500">
             Ver Todos
           </a>
         </div>
@@ -159,6 +194,64 @@ function ContinueWatchingContent() {
   return <ContentRow contents={continueWatching} aspectRatio="landscape" />;
 }
 
+function PopularRankingContent() {
+  const [ranking, setRanking] = useState<RankingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    const fetchRanking = async () => {
+      if (isAuthenticated) {
+        try {
+          const data = await getPopularRanking();
+          setRanking(data);
+        } catch (error) {
+          console.error("Erro ao buscar ranking de popularidade:", error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchRanking();
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return <RankingRowSkeleton />;
+  }
+
+  return <RankingRow items={ranking} />;
+}
+
+function ChannelsContent() {
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Como a lista de canais é estática, não depende de autenticação
+    const loadChannels = () => {
+      try {
+        const availableChannels = getAvailableChannels();
+        setChannels(availableChannels);
+      } catch (error) {
+        console.error("Erro ao carregar canais:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChannels();
+  }, []);
+
+  if (loading) {
+    return <ChannelsRowSkeleton />;
+  }
+
+  return <ChannelsRow channels={channels} />;
+}
+
 function RecommendedContent() {
   const [recommendations, setRecommendations] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
@@ -188,4 +281,44 @@ function RecommendedContent() {
   }
 
   return <ContentRow contents={recommendations} aspectRatio="portrait" />;
+}
+
+function HomeHeroSlider() {
+  const [highlights, setHighlights] = useState<Array<{
+    id: string;
+    title: string;
+    description: string;
+    poster_url: string;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    const fetchHighlights = async () => {
+      if (isAuthenticated) {
+        try {
+          const data = await getHomeHighlights();
+          setHighlights(data);
+        } catch (error) {
+          console.error("Erro ao buscar destaques:", error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchHighlights();
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return <HeroSliderSkeleton />;
+  }
+
+  if (highlights.length === 0) {
+    return null;
+  }
+
+  return <HeroSlider items={highlights} />;
 }

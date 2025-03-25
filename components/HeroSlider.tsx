@@ -1,159 +1,128 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
-type HeroItem = {
+interface HeroItem {
   id: string
   title: string
   description: string
   poster_url: string
 }
 
-type HeroSliderProps = {
+interface HeroSliderProps {
   items: HeroItem[]
 }
 
-export default function HeroSlider({ items = [] }: HeroSliderProps) {
+export default function HeroSlider({ items }: HeroSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [direction, setDirection] = useState(0)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Garantir que items seja sempre um array
-  const safeItems = Array.isArray(items) ? items : []
-
-  const startAutoplay = () => {
-    if (safeItems.length <= 1) return
-
-    intervalRef.current = setInterval(() => {
-      setDirection(1)
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % safeItems.length)
-    }, 5000)
-  }
-
-  const stopAutoplay = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-    }
-  }
-
+  const router = useRouter()
+  
   useEffect(() => {
-    startAutoplay()
-    return () => stopAutoplay()
-  }, [safeItems.length])
-
-  const handlePrevious = () => {
-    if (safeItems.length <= 1) return
-
-    stopAutoplay()
-    setDirection(-1)
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + safeItems.length) % safeItems.length)
-    startAutoplay()
-  }
-
-  const handleNext = () => {
-    if (safeItems.length <= 1) return
-
-    stopAutoplay()
-    setDirection(1)
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % safeItems.length)
-    startAutoplay()
-  }
-
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-  }
-
-  if (safeItems.length === 0) {
+    if (items.length === 0) return
+    
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % items.length)
+    }, 6000)
+    
+    return () => clearInterval(interval)
+  }, [items.length])
+  
+  if (items.length === 0) {
     return null
   }
-
-  const currentItem = safeItems[currentIndex]
-
+  
+  const handleWatchClick = (id: string) => {
+    router.push(`/content/${id}`)
+  }
+  
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index)
+  }
+  
   return (
-    <div className="relative h-[50vh] overflow-hidden">
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={currentIndex}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{ type: "tween", duration: 0.5 }}
-          className="absolute inset-0"
+    <div className="relative w-full h-72 md:h-96 overflow-hidden">
+      {items.map((item, index) => (
+        <div
+          key={item.id}
+          className={`absolute inset-0 transition-opacity duration-1000 ${
+            index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+          }`}
         >
-          <Image
-            src={currentItem.poster_url || "/placeholder.svg?height=600&width=400"}
-            alt={currentItem.title}
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/50"></div>
-
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <h2 className="text-3xl font-bold mb-2">{currentItem.title}</h2>
-            <p className="text-sm text-gray-300 line-clamp-2">{currentItem.description}</p>
-            <Link href={`/conteudo/${currentItem.id}`} className="inline-block mt-4">
-              <Button className="bg-white text-black hover:bg-white/90">Assistir Agora</Button>
-            </Link>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      {safeItems.length > 1 && (
-        <>
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-            {safeItems.map((_, index) => (
+          <div className="relative w-full h-full">
+            <Image
+              src={item.poster_url}
+              alt={item.title}
+              fill
+              className="object-cover"
+              priority={index === 0}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.src = "/placeholder-hero.png"
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 p-6 w-full">
+              <h2 className="text-3xl font-bold text-white mb-2">{item.title}</h2>
+              <p className="text-gray-200 mb-4 line-clamp-2 md:line-clamp-3 max-w-xl">
+                {item.description}
+              </p>
               <button
-                key={index}
-                className={`w-2 h-2 rounded-full ${index === currentIndex ? "bg-white" : "bg-white/50"}`}
-                onClick={() => {
-                  stopAutoplay()
-                  setDirection(index > currentIndex ? 1 : -1)
-                  setCurrentIndex(index)
-                  startAutoplay()
-                }}
-              />
-            ))}
+                onClick={() => handleWatchClick(item.id)}
+                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full flex items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                Assistir
+              </button>
+            </div>
           </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 rounded-full p-1"
-            onClick={handlePrevious}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 rounded-full p-1"
-            onClick={handleNext}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        </>
-      )}
+        </div>
+      ))}
+      
+      {/* Indicadores de slide */}
+      <div className="absolute bottom-4 right-4 flex space-x-2">
+        {items.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-2.5 h-2.5 rounded-full transition-all ${
+              index === currentIndex
+                ? "bg-blue-500 w-8"
+                : "bg-gray-400 hover:bg-gray-300"
+            }`}
+            aria-label={`Ir para slide ${index + 1}`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
 
+export function HeroSliderSkeleton() {
+  return (
+    <div className="relative w-full h-72 md:h-96">
+      <Skeleton className="w-full h-full" />
+      <div className="absolute bottom-0 left-0 p-6 w-full">
+        <Skeleton className="h-8 w-64 mb-2" />
+        <Skeleton className="h-4 w-full max-w-xl mb-2" />
+        <Skeleton className="h-4 w-full max-w-md mb-4" />
+        <Skeleton className="h-10 w-32 rounded-full" />
+      </div>
+    </div>
+  )
+}

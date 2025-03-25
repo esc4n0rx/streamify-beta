@@ -14,6 +14,7 @@ import FavoriteButton from "@/components/FavoriteButton"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/components/AuthProvider"
+import MultiSeasonEpisodes from "@/components/MultiSeasonEpisodes"
 
 export default function ContentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -212,13 +213,11 @@ export default function ContentDetailPage({ params }: { params: Promise<{ id: st
         )}
         {isSeries && seasons && seasons.length > 0 && (
           <div className="mt-6">
-            {seasons.map((season) => (
-              <SeasonEpisodes 
-                key={season.id} 
-                season={season} 
-                contentId={id}
-              />
-            ))}
+            <MultiSeasonEpisodes 
+              seasons={seasons} 
+              contentId={id}
+              currentSeason={current_season}
+            />
           </div>
         )}
       </div>
