@@ -44,6 +44,6 @@ export default function CategoryPage({ params }: { params: { slug: string } }) {
 async function CategoryContents({ slug }: { slug: string }) {
   const contents = await getCategoryContents(slug)
   // Garantir que contents seja um array
-  return <ContentGrid contents={Array.isArray(contents) ? contents : []} />
+  return <ContentGrid contents={Array.isArray(contents) ? contents : []} aspectRatio={"landscape"} />
 }
 

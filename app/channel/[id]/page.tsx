@@ -18,6 +18,8 @@ const HeroSlider = ({
   const router = useRouter()
   
   useEffect(() => {
+    if (items.length <= 1) return
+    
     const interval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % items.length)
     }, 5000)
@@ -60,16 +62,18 @@ const HeroSlider = ({
         </div>
       ))}
       
-      <div className="absolute bottom-2 right-2 flex space-x-1">
-        {items.map((_, index) => (
-          <div 
-            key={index}
-            className={`w-2 h-2 rounded-full ${
-              index === currentIndex ? 'bg-blue-500' : 'bg-gray-500'
-            }`}
-          />
-        ))}
-      </div>
+      {items.length > 1 && (
+        <div className="absolute bottom-2 right-2 flex space-x-1">
+          {items.map((_, index) => (
+            <div 
+              key={index}
+              className={`w-2 h-2 rounded-full ${
+                index === currentIndex ? 'bg-blue-500' : 'bg-gray-500'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -77,6 +81,14 @@ const HeroSlider = ({
 // Componentes de Skeleton para carregamento
 const HeroSkeleton = () => (
   <Skeleton className="w-full h-64 md:h-80" />
+)
+
+// Componente de Skeleton para card de conteúdo
+const ContentCardSkeleton = () => (
+  <div className="aspect-[2/3] relative rounded-lg overflow-hidden">
+    <Skeleton className="w-full h-full" />
+    <Skeleton className="h-4 w-3/4 mt-2" />
+  </div>
 )
 
 export default function ChannelPage() {
@@ -97,17 +109,20 @@ export default function ChannelPage() {
     title: string
     poster_url: string
     category?: string
+    has_episodes: boolean
   }>>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
   const [totalPages, setTotalPages] = useState(1)
   const [loadingMore, setLoadingMore] = useState(false)
+  const itemsPerPage = 20 
   
   useEffect(() => {
     const fetchChannelData = async () => {
       if (isAuthenticated) {
         setLoading(true)
+        setPage(1) 
         
         try {
           // Encontre o nome do canal pelo ID
@@ -122,9 +137,9 @@ export default function ChannelPage() {
             console.log("Highlights data:", highlightsData)
             setHighlights(highlightsData)
             
-            // Buscar conteúdos do canal
+            // Buscar conteúdos do canal (primeira página)
             const { contents: channelContents, hasMore: moreAvailable, totalPages: pages } = 
-              await getChannelContent(channelId, 1, 20)
+              await getChannelContent(channelId, 1, itemsPerPage)
             
             console.log("Channel contents:", channelContents)
             setContents(channelContents)
@@ -142,7 +157,7 @@ export default function ChannelPage() {
     }
     
     fetchChannelData()
-  }, [channelId, isAuthenticated])
+  }, [channelId, isAuthenticated, itemsPerPage])
   
   const loadMoreContent = async () => {
     if (!hasMore || loadingMore) return
@@ -152,11 +167,16 @@ export default function ChannelPage() {
     
     try {
       const { contents: moreContents, hasMore: moreAvailable } = 
-        await getChannelContent(channelId, nextPage, 20)
+        await getChannelContent(channelId, nextPage, itemsPerPage)
       
-      setContents(prev => [...prev, ...moreContents])
-      setPage(nextPage)
-      setHasMore(moreAvailable)
+      if (moreContents.length > 0) {
+        setContents(prev => [...prev, ...moreContents])
+        setPage(nextPage)
+        setHasMore(moreAvailable)
+      } else {
+        // Se não retornou conteúdos, provavelmente chegamos ao fim
+        setHasMore(false)
+      }
     } catch (error) {
       console.error("Erro ao carregar mais conteúdos:", error)
     } finally {
@@ -180,9 +200,13 @@ export default function ChannelPage() {
       
       {loading ? (
         <HeroSkeleton />
-      ) : (
+      ) : highlights.length > 0 ? (
         <div className="mb-6">
           <HeroSlider items={highlights} />
+        </div>
+      ) : (
+        <div className="mb-6 px-4 py-6 text-center text-gray-400 border border-dashed border-gray-700 rounded-lg">
+          <p>Nenhum destaque disponível para este canal.</p>
         </div>
       )}
       
@@ -191,8 +215,8 @@ export default function ChannelPage() {
         {loading ? (
           <div className="px-4">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-                <Skeleton key={i} className="w-full aspect-[2/3] rounded-lg" />
+              {Array.from({ length: 10 }).map((_, i) => (
+                <ContentCardSkeleton key={i} />
               ))}
             </div>
           </div>
@@ -235,6 +259,11 @@ export default function ChannelPage() {
                           </svg>
                         </div>
                       </div>
+                      {content.has_episodes && (
+                        <div className="absolute top-1 right-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded">
+                          Série
+                        </div>
+                      )}
                     </div>
                     <div className="mt-2 truncate">{content.title}</div>
                   </div>
@@ -262,7 +291,7 @@ export default function ChannelPage() {
             )}
           </>
         ) : (
-          <div className="px-4 py-8 text-center text-gray-400">
+          <div className="px-4 py-8 text-center text-gray-400 border border-dashed border-gray-700 rounded-lg mx-4">
             <p>Nenhum conteúdo disponível para este canal.</p>
           </div>
         )}

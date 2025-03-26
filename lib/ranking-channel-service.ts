@@ -111,6 +111,14 @@ export interface Channel {
   logo_url: string;
 }
 
+// Cache para armazenar os dados da API e evitar chamadas repetidas para cada canal
+const channelContentCache: Record<string, {
+  data: APIChannelContent[];
+  timestamp: number;
+}> = {};
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
 // Função para buscar o ranking de popularidade
 export async function getPopularRanking(): Promise<RankingItem[]> {
   try {
@@ -121,7 +129,7 @@ export async function getPopularRanking(): Promise<RankingItem[]> {
         "Authorization": `Bearer ${getToken()}`
       }
     });
-    console.log(response);
+    
     if (!response.ok) {
       console.error(`Erro ao buscar ranking: ${response.status}`);
       return [];
@@ -186,7 +194,57 @@ export function getAvailableChannels(): Channel[] {
   ];
 }
 
-// Função para buscar conteúdo de um canal específico
+// Função auxiliar para buscar e cachear o conteúdo completo de um canal
+async function fetchChannelContentData(channelId: string): Promise<APIChannelContent[]> {
+  // Verificar cache primeiro
+  const now = Date.now();
+  if (
+    channelContentCache[channelId] && 
+    now - channelContentCache[channelId].timestamp < CACHE_DURATION
+  ) {
+    console.log(`Usando dados em cache para o canal ${channelId}`);
+    return channelContentCache[channelId].data;
+  }
+
+  try {
+    // Buscando todos os dados do canal sem paginação na API
+    const response = await fetch(
+      `${BASE_URL}/api/content?subcategoria=Serie&categoria=${channelId}`, 
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getToken()}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`Erro ao buscar conteúdo do canal: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    console.log("API response:", data);
+    
+    if (data?.data && data.data[channelId]?.Serie && Array.isArray(data.data[channelId].Serie)) {
+      // Armazenar em cache
+      channelContentCache[channelId] = {
+        data: data.data[channelId].Serie,
+        timestamp: now
+      };
+      
+      return data.data[channelId].Serie;
+    }
+    
+    return [];
+  } catch (error) {
+    console.error(`Erro ao buscar conteúdo do canal ${channelId}:`, error);
+    return [];
+  }
+}
+
+// Função para buscar conteúdo de um canal específico com paginação no frontend
 export async function getChannelContent(
   channelId: string,
   page: number = 1,
@@ -203,50 +261,52 @@ export async function getChannelContent(
   totalPages: number;
 }> {
   try {
-    const response = await fetch(
-      `${BASE_URL}/api/content?subcategoria=Serie&categoria=${channelId}&page=${page}&limit=${limit}`, 
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${getToken()}`
-        }
-      }
-    );
-
-    if (!response.ok) {
-      console.error(`Erro ao buscar conteúdo do canal: ${response.status}`);
+    // Buscar todos os dados do canal (sem paginação da API)
+    const allChannelContent = await fetchChannelContentData(channelId);
+    
+    if (allChannelContent.length === 0) {
       return { contents: [], hasMore: false, totalPages: 0 };
     }
-
-    const data = await response.json();
-    console.log("API response:", data);
     
-    if (data?.data && data.data[channelId]?.Serie && Array.isArray(data.data[channelId].Serie)) {
-      const contents = data.data[channelId].Serie.map((item: APIChannelContent) => {
-        // Encontrar o primeiro episódio, se existir
-        const firstEpisode = item.episodios && item.episodios.length > 0 ? item.episodios[0] : null;
-        
-        return {
-          // Se tiver primeiro episódio, usa o ID dele, senão gera um ID único
-          id: firstEpisode ? firstEpisode.id.toString() : `serie-${Math.random().toString(36).substring(2, 9)}`,
-          title: item.nome,
-          // Certifica-se de que a URL do poster é válida
-          poster_url: item.poster && item.poster.startsWith("http") 
-            ? item.poster 
-            : "/placeholder-poster.png",
-          category: "Série",
-          has_episodes: Boolean(item.episodios && item.episodios.length > 0)
-        };
-      });
-      
-      const hasMore = page < (data.pagination?.pages || 1);
-      const totalPages = data.pagination?.pages || 1;
-      
-      return { contents, hasMore, totalPages };
-    }
+    // Implementar paginação no frontend
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const paginatedContent = allChannelContent.slice(startIndex, endIndex);
     
-    return { contents: [], hasMore: false, totalPages: 0 };
+    // Calcular número total de páginas
+    const totalPages = Math.ceil(allChannelContent.length / limit);
+    
+    // Verificar se há mais conteúdo
+    const hasMore = page < totalPages;
+    
+    // Mapear os dados para o formato esperado pelo componente
+    const contents = paginatedContent.map((item: APIChannelContent) => {
+      // Verificar se o item tem episódios
+      const hasEpisodes = Boolean(item.episodios && item.episodios.length > 0);
+      
+      // Usar o primeiro episódio para ID se existir, caso contrário, criar um ID baseado no nome da série
+      const firstEpisode = hasEpisodes ? item.episodios![0] : null;
+      const itemId = firstEpisode 
+        ? firstEpisode.id.toString() 
+        : `serie-${item.nome.replace(/\s+/g, '-').toLowerCase()}`;
+      
+      return {
+        id: itemId,
+        title: item.nome,
+        // Usar o poster da série para todos os episódios (não o poster do episódio)
+        poster_url: item.poster && item.poster.trim() !== "" 
+          ? item.poster 
+          : "/placeholder-poster.png",
+        category: "Série",
+        has_episodes: hasEpisodes
+      };
+    });
+    
+    return { 
+      contents, 
+      hasMore, 
+      totalPages 
+    };
   } catch (error) {
     console.error(`Erro ao buscar conteúdo do canal ${channelId}:`, error);
     return { contents: [], hasMore: false, totalPages: 0 };
@@ -261,55 +321,61 @@ export async function getChannelHighlights(channelId: string): Promise<Array<{
   poster_url: string;
 }>> {
   try {
-    // Buscar primeira página do conteúdo do canal
-    const { contents } = await getChannelContent(channelId, 1, 10);
+    // Buscar todos os dados do canal (sem paginação)
+    const allChannelContent = await fetchChannelContentData(channelId);
     
-    if (contents.length === 0) {
+    if (allChannelContent.length === 0) {
       console.log("Nenhum conteúdo encontrado para destaques do canal", channelId);
       return [];
     }
     
-    console.log("Conteúdos para slider:", contents);
-    
     // Selecionar até 3 itens aleatórios para o slider
-    const shuffled = [...contents].sort(() => 0.5 - Math.random());
+    const shuffled = [...allChannelContent].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, Math.min(3, shuffled.length));
     
     // Buscar sinopses para os itens selecionados
     const highlights = await Promise.all(
       selected.map(async (item) => {
-        let description = "";
+        let description = item.sinopse || "";
         
-        // Tentar buscar sinopse na API
-        try {
-          const response = await fetch(
-            `${BASE_URL}/api/sinopse?nome=${encodeURIComponent(item.title)}`,
-            {
-              method: "GET",
-              headers: {
-                "Authorization": `Bearer ${getToken()}`
+        // Tentar buscar sinopse na API se não tiver
+        if (!description && item.nome) {
+          try {
+            const response = await fetch(
+              `${BASE_URL}/api/sinopse?nome=${encodeURIComponent(item.nome)}`,
+              {
+                method: "GET",
+                headers: {
+                  "Authorization": `Bearer ${getToken()}`
+                }
               }
+            );
+            
+            if (response.ok) {
+              const data = await response.json();
+              description = data.sinopse || "Assista agora este conteúdo exclusivo";
+            } else {
+              description = "Assista agora este conteúdo exclusivo";
             }
-          );
-          
-          if (response.ok) {
-            const data = await response.json();
-            description = data.sinopse || "Assista agora este conteúdo exclusivo";
-          } else {
+          } catch (error) {
+            console.error("Erro ao buscar sinopse:", error);
             description = "Assista agora este conteúdo exclusivo";
           }
-        } catch (error) {
-          console.error("Erro ao buscar sinopse:", error);
-          description = "Assista agora este conteúdo exclusivo";
         }
         
+        // Criar ID baseado no primeiro episódio ou no nome da série
+        const firstEpisode = item.episodios && item.episodios.length > 0 ? item.episodios[0] : null;
+        const itemId = firstEpisode 
+          ? firstEpisode.id.toString() 
+          : `serie-${item.nome.replace(/\s+/g, '-').toLowerCase()}`;
+        
         return {
-          id: item.id,
-          title: item.title,
+          id: itemId,
+          title: item.nome,
           description,
-          poster_url: item.poster_url.startsWith("http") 
-            ? item.poster_url 
-            : "/placeholder-poster.png" // Garantir que a URL é válida
+          poster_url: item.poster && item.poster.trim() !== "" 
+            ? item.poster 
+            : "/placeholder-poster.png"
         };
       })
     );
