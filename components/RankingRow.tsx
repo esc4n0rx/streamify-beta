@@ -29,7 +29,7 @@ export default function RankingRow({ items }: RankingRowProps) {
   }
 
   const handleClick = (id: string) => {
-    router.push(`/content/${id}`)
+    router.push(`/conteudo/${id}`)
   }
 
   return (

@@ -30,7 +30,7 @@ const HeroSlider = ({
   if (items.length === 0) return null
   
   const handleCardClick = (id: string) => {
-    router.push(`/content/${id}`)
+    router.push(`/conteudo/${id}`)
   }
   
   return (

@@ -396,7 +396,7 @@ export default function ContentDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
       
-      {/* Contenido Principal */}
+      {/* Conteúdo Principal */}
       <div className="p-4">
         {/* Sinopse */}
         {description && (

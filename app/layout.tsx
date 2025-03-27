@@ -14,13 +14,16 @@ export const metadata: Metadata = {
   title: "Streamify",
   description: "Your premium streaming service",
   manifest: "/manifest.json",
-  themeColor: "#000000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Streamify",
   },
     generator: 'v0.dev'
+}
+
+export const viewport = {
+  themeColor: "#000000",
 }
 
 export default function RootLayout({

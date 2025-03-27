@@ -120,41 +120,81 @@ export async function getContentDetail(id: string): Promise<ContentDetail | null
     };
 
     // Se for série, adicionar informações de temporadas/episódios
-    if (contentType === "series" && content.episodios && Array.isArray(content.episodios)) {
-      // Agrupar episódios por temporada
-      const episodesBySeasons = content.episodios.reduce((acc: {[key: string]: Episode[]}, episode: Episode) => {
-        const seasonNumber = episode.temporada || "1";
-        if (!acc[seasonNumber]) {
-          acc[seasonNumber] = [];
-        }
-        acc[seasonNumber].push({
-          ...episode,
-          title: `Episódio ${episode.episodio}`,
-          description: "", // Podemos tentar buscar descrição específica se necessário
-          thumbnail: content.poster // Usar poster da série como fallback
+    if (contentType === "series") {
+      // Processar formato de temporadas/episódios
+      const seasons: Season[] = [];
+      
+      // Verificar se temos o novo formato com object 'temporadas'
+      if (content.temporadas && typeof content.temporadas === 'object') {
+        // Novo formato com object temporadas
+        Object.keys(content.temporadas).forEach(seasonNumber => {
+          const seasonEpisodes = content.temporadas[seasonNumber];
+          
+          if (Array.isArray(seasonEpisodes) && seasonEpisodes.length > 0) {
+            const episodes: Episode[] = seasonEpisodes.map(ep => ({
+              id: parseInt(ep.episodio.toString()),
+              episodio: ep.episodio.toString(),
+              temporada: seasonNumber,
+              url: ep.url,
+              title: `Episódio ${ep.episodio}`,
+              thumbnail: content.poster, // Usar poster da série como fallback
+              description: "",
+              duration: 0
+            }));
+            
+            seasons.push({
+              id: `season-${seasonNumber}`,
+              number: parseInt(seasonNumber),
+              title: `Temporada ${seasonNumber}`,
+              episodes: episodes
+            });
+          }
         });
-        return acc;
-      }, {});
+      } 
+      // Verificar o formato antigo com array de episódios
+      else if (content.episodios && Array.isArray(content.episodios)) {
+        // Agrupar episódios por temporada
+        const episodesBySeasons = content.episodios.reduce((acc: {[key: string]: Episode[]}, episode: Episode) => {
+          const seasonNumber = episode.temporada || "1";
+          if (!acc[seasonNumber]) {
+            acc[seasonNumber] = [];
+          }
+          acc[seasonNumber].push({
+            ...episode,
+            title: `Episódio ${episode.episodio}`,
+            description: "", // Podemos tentar buscar descrição específica se necessário
+            thumbnail: content.poster // Usar poster da série como fallback
+          });
+          return acc;
+        }, {});
 
-      // Converter para array de temporadas
-      const seasons: Season[] = Object.keys(episodesBySeasons).map(seasonNumber => ({
-        id: `season-${seasonNumber}`,
-        number: parseInt(seasonNumber, 10),
-        title: `Temporada ${seasonNumber}`,
-        episodes: episodesBySeasons[seasonNumber]
-      }));
-
+        // Converter para array de temporadas
+        Object.keys(episodesBySeasons).forEach(seasonNumber => {
+          seasons.push({
+            id: `season-${seasonNumber}`,
+            number: parseInt(seasonNumber, 10),
+            title: `Temporada ${seasonNumber}`,
+            episodes: episodesBySeasons[seasonNumber]
+          });
+        });
+      }
+      
+      // Ordenar temporadas por número
+      seasons.sort((a, b) => a.number - b.number);
+      
+      // Adicionar temporadas ao resultado
       result.seasons = seasons;
       
       // Definir temporada/episódio atual (primeiro episódio da primeira temporada como padrão)
       if (seasons.length > 0 && seasons[0].episodes.length > 0) {
         result.current_season = seasons[0].number;
-        result.current_episode = parseInt(seasons[0].episodes[0].episodio, 10);
+        const epNumber = seasons[0].episodes[0].episodio;
+        result.current_episode = typeof epNumber === 'string' ? parseInt(epNumber, 10) : epNumber;
       }
 
       // Verificar se há progresso de visualização
       try {
-        const progressResponse = await fetch(`${BASE_URL}/api/watch/progresso`, {
+        const progressResponse = await fetch(`${BASE_URL}/api/continue-watching`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`
@@ -219,7 +259,7 @@ export async function saveWatchProgress(
       payload.episodio = episodeNumber;
     }
 
-    const response = await fetch(`${BASE_URL}/api/watch/progresso`, {
+    const response = await fetch(`${BASE_URL}/api/continue-watching`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
